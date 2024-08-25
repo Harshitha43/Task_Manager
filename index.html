@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskManager App</title>
+ 
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<style>
+    /* General container styling */
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+}
+
+/* Header styling */
+h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+/* Form and input styling */
+#task-form {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+#task-input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 80%;
+}
+
+.submit {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+.submit:hover {
+  background-color: #0056b3;
+}
+
+/* Task list styling */
+#task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#task-list li {
+  padding: 0.5rem;
+  background-color: white;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+#task-list li.completed {
+  text-decoration: line-through;
+  color: #888;
+}
+
+/* Button styling */
+button {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.edit-btn {
+  background-color: #ffc107;
+  color: black;
+  margin-right: 0.5rem;
+}
+
+.edit-btn:hover {
+  background-color: #e0a800;
+}
+
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #c82333;
+}
+
+</style>
+<body>
+    <div class="container">
+        <h1>Task Manager</h1>
+        <form id="task-form">
+            <input type="text" id="task-input" placeholder="Enter a new task" required>
+            <button type="submit" class="submit">Add Task</button>
+        </form>
+        <ul id="task-list"></ul>
+    </div>
+</body>
+
+
+<script>
+$(document).ready(function() {
+    const taskForm = $('#task-form');
+    const taskInput = $('#task-input');
+    const taskList = $('#task-list');
+
+    // Load tasks from local storage
+    const loadTasks = () => {
+        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+        // Populate the task list with tasks
+        taskList.html(tasks.map((task, index) => {
+            return `<li data-index="${index}" class="${task.completed ? 'completed' : ''} d-flex flex-between">
+                ${task.text}
+                <div>
+                    <button class="edit-btn">Edit</button>
+                    <button class="delete-btn">Delete</button>
+                </div>
+            </li>`;
+        }).join(''));
+    };
+
+    // Save tasks to local storage
+    const saveTasks = (tasks) => {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    };
+
+    // Add a new task
+    taskForm.on('submit', function(e) {
+        e.preventDefault();  // Prevent form submission and page reload
+
+        const taskText = taskInput.val().trim();
+        if (taskText === '') return;
+
+        // Load tasks from localStorage or initialize an empty array
+        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        
+        // Push the new task to the array
+        tasks.push({ text: taskText, completed: false });
+        
+        // Save the updated tasks to localStorage
+        saveTasks(tasks);
+
+        // Clear the input field
+        taskInput.val('');
+
+        // Reload the task list
+        loadTasks();
+    });
+
+    // Edit or delete tasks
+    taskList.on('click', 'button', function(e) {
+        const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        const $li = $(this).closest('li');  // Closest <li> element
+        const index = $li.data('index');    // Get the data-index value
+
+        if ($(this).hasClass('edit-btn')) {
+            // Edit task
+            const newText = prompt('Edit task:', tasks[index].text);
+            if (newText !== null) {
+                tasks[index].text = newText.trim();
+                saveTasks(tasks);
+                loadTasks();
+            }
+        } else if ($(this).hasClass('delete-btn')) {
+            // Delete task
+            if (confirm('Are you sure you want to delete this task?')) {
+                tasks.splice(index, 1);
+                saveTasks(tasks);
+                loadTasks();
+            }
+        }
+    });
+
+    // Mark task as complete by clicking on the task (not buttons)
+    taskList.on('click', 'li', function(e) {
+        if (!$(e.target).is('button')) {
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            const index = $(this).data('index'); // Get the task's index
+            tasks[index].completed = !tasks[index].completed;
+            saveTasks(tasks);
+            loadTasks();
+        }
+    });
+
+    // Initial load
+    loadTasks();
+});
+
+</script>
+</html>
